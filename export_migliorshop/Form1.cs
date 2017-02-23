@@ -17,6 +17,7 @@ namespace export_migliorshop
         private void button2_Click(object sender, EventArgs e)
 
         {
+          
             FbDataReader lettore = null;
             FbConnection conn = new FbConnection("User=SYSDBA;Password=masterkey;Database=" + textBox1.Text + ";DataSource=localhost");
 
@@ -31,12 +32,18 @@ namespace export_migliorshop
                                             "where a.sud_merc='P' "+
                                             "group by  a.kdes,a.kean,a.km10,a.iva,a.tip_revoca "+
                                             "order by a.kdes", conn);
+
+            
             
             StreamWriter scriviFile = new StreamWriter("c:/file_migliorshop/estratto.csv");
             lettore = query.ExecuteReader();
+           
+            
+            
             while (lettore.Read())
 
             {
+                
                 string testa_descrizione ="PRODOTTO";
                 string testa_ean = "EAN";
                 string testa_minsan = "MINSAN";
@@ -45,10 +52,13 @@ namespace export_migliorshop
                 string testa_costo = "COSTO";
                 string testa_iva = "IVA";
                 string testa_revoca = "REVOCA";
-
+                
                 scriviFile.WriteLine("{0,-41};{1,-13};{2,-13};{3,-8};{4,-8};{5,-3};{6,-6};", testa_descrizione, testa_ean,testa_minsan,testa_prezzo,testa_costo, testa_iva, testa_revoca);
-                 while (lettore.Read())
+               
+                while (lettore.Read())
                 {
+                 
+
                     string descrizione = lettore.GetValue(0).ToString();
                     string ean = lettore.GetValue(1).ToString();
                     string minsan = lettore.GetValue(2).ToString();
@@ -86,12 +96,44 @@ namespace export_migliorshop
                         }
 
                     scriviFile.WriteLine("{0,-41};{1,13};{2,13};{3,8};{4,8};{5,3};{6,6};", descrizione, ean, minsan, prezzo.ToString("0.00"), costo.ToString("0.00"), iva, revoca);
-                                      
+                      
                 }
                 MessageBox.Show("Export Completato!");
             }
 
 
+        }
+
+     
+
+        private void progresbarmetodo(int contatore)
+        {
+            FbDataReader lettore = null;
+            FbConnection conn = new FbConnection("User=SYSDBA;Password=masterkey;Database=" + textBox1.Text + ";DataSource=localhost");
+
+            conn.Open();
+            FbCommand query = new FbCommand("select a.kdes as Prodotto," +
+                                            "a.kean as EAN," +
+                                            "a.km10 as Minsan," +
+                                            "(select v_euro from vero_prezzo('today', a.km10,2)) as prezzo," +
+                                            "max(l.e_costo_fd) as costo," +
+                                            "a.iva," +
+                                            "a.tip_revoca as revoca from costi_gr l inner join anapro a on a.km10 = l.km10 " +
+                                            "where a.sud_merc='P' " +
+                                            "group by  a.kdes,a.kean,a.km10,a.iva,a.tip_revoca " +
+                                            "order by a.kdes", conn);
+
+
+
+
+            lettore = query.ExecuteReader();
+            while (lettore.Read())
+            {
+                contatore++;
+              
+            }
+            
+            conn.Close();
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -102,6 +144,17 @@ namespace export_migliorshop
         private void button4_Click(object sender, EventArgs e)
         {
             Process.Start("c:/file_migliorshop/");
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            export_migliorshop.Properties.Settings.Default.percorso_winfarm = textBox1.Text;
+            export_migliorshop.Properties.Settings.Default.Save();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            textBox1.Text = export_migliorshop.Properties.Settings.Default.percorso_winfarm;
         }
     }
     }
